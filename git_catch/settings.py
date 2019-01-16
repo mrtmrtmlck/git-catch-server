@@ -124,5 +124,5 @@ STATIC_URL = '/static/'
 
 # graphene_django settings
 GRAPHENE = {
-    'SCHEMA': 'cookbook.schema.schema'
+    'SCHEMA': 'git_catch.schema.schema'
 }
