@@ -1,4 +1,5 @@
 import graphene
+from django.db import transaction
 from graphene_django import DjangoObjectType
 
 from issue_catcher.models import Language, Label, User
@@ -23,14 +24,18 @@ class SubscribeUser(graphene.Mutation):
         language_id_list = graphene.List(graphene.Int)
 
     def mutate(self, info, label_id_list, language_id_list, email):
-        user = User(email=email)
-        user.save()
-        labels = Label.objects.filter(id__in=label_id_list)
-        user.labels.add(*labels)
-        languages = Language.objects.filter(id__in=language_id_list)
-        user.languages.add(*languages)
+        try:
+            with transaction.atomic():
+                user = User(email=email)
+                user.save()
+                labels = Label.objects.filter(id__in=label_id_list)
+                user.labels.add(*labels)
+                languages = Language.objects.filter(id__in=language_id_list)
+                user.languages.add(*languages)
 
-        return SubscribeUser(id=user.id)
+                return SubscribeUser(id=user.id)
+        except:
+            raise Exception("Subscription unsuccessful")
 
 
 class UnsubscribeUser(graphene.Mutation):
