@@ -33,6 +33,18 @@ class SubscribeUser(graphene.Mutation):
         return SubscribeUser(id=user.id)
 
 
+class UnsubscribeUser(graphene.Mutation):
+    succeed = graphene.Boolean()
+
+    class Arguments:
+        email = graphene.String()
+
+    def mutate(self, info, email):
+        User.objects.filter(email=email).delete()
+
+        return UnsubscribeUser(succeed=True)
+
+
 class Query(object):
     languages = graphene.List(LanguageType)
     labels = graphene.List(LabelType)
@@ -46,3 +58,4 @@ class Query(object):
 
 class Mutation(graphene.ObjectType):
     subscribe_user = SubscribeUser.Field()
+    unsubscribe_user = UnsubscribeUser.Field()
