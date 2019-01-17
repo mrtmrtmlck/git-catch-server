@@ -22,7 +22,7 @@ class Label(models.Model):
 
 
 class User(models.Model):
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     languages = models.ManyToManyField(Language)
     labels = models.ManyToManyField(Label)
 
