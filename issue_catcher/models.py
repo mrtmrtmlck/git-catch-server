@@ -23,14 +23,14 @@ class Label(models.Model):
 
 class User(models.Model):
     email = models.EmailField()
-    language = models.ManyToManyField(Language)
-    label = models.ManyToManyField(Label)
+    languages = models.ManyToManyField(Language)
+    labels = models.ManyToManyField(Label)
 
     def display_language(self):
-        return ', '.join(lang.name for lang in self.language.all())
+        return ', '.join(language.name for language in self.languages.all())
 
     def display_label(self):
-        return ', '.join(label.name for label in self.label.all())
+        return ', '.join(label.name for label in self.labels.all())
 
     display_language.short_description = 'Language'
     display_label.short_description = 'Label'
