@@ -1,7 +1,7 @@
 import requests
 from string import Template
 from decouple import config
-from issue_catcher.models import Label
+from issue_catcher.models import Label, User
 
 
 def get_issues():
@@ -51,3 +51,17 @@ def get_issues():
         issue_list.extend([item['node'] for item in json_res['data']['search']['edges'] if item['node']])
 
     return issue_list
+
+
+def filter_issues():
+    issue_list = get_issues()
+    users = User.objects.all()
+    for user in users:
+        user_labels = user.labels.values_list('name', flat=True)
+        user_languages = user.languages.values_list('name', flat=True)
+        users_issues = [
+            issue for issue in issue_list
+            for label in issue['labels']['edges']
+            for language in issue['repository']['languages']['edges']
+            if label['node']['name'] in user_labels and language['node']['name'] in user_languages
+        ]
