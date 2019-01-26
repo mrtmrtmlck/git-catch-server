@@ -1,4 +1,6 @@
 import base64
+import json
+
 import graphene
 from django.db import transaction
 from graphene_django import DjangoObjectType
@@ -27,8 +29,7 @@ class VerifyUser(graphene.Mutation):
 
     def mutate(self, info, email, label_id_list, language_id_list):
         token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
-        encoded_dict = str(token_dict).encode('utf-8')
-        token = base64.b64encode(encoded_dict)
+        token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
         send_verification_email(email, token)
 
         return VerifyUser(succeed=True)
@@ -42,7 +43,10 @@ class SubscribeUser(graphene.Mutation):
 
     def mutate(self, info, token):
         try:
-            subscription_info = eval(base64.b64decode(token))
+            subscription_info = json.loads(base64.urlsafe_b64decode(token).decode('utf-8'))
+            if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info['language_id_list']:
+                raise ValueError()
+
             with transaction.atomic():
                 user = User(email=subscription_info['email'])
                 user.save()
