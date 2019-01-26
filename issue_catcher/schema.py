@@ -30,6 +30,7 @@ class VerifyUser(graphene.Mutation):
         encoded_dict = str(token_dict).encode('utf-8')
         token = base64.b64encode(encoded_dict)
         send_verification_email(email, token)
+
         return VerifyUser(succeed=True)
 
 
@@ -79,5 +80,6 @@ class Query(object):
 
 
 class Mutation(graphene.ObjectType):
+    verify_user = VerifyUser.Field()
     subscribe_user = SubscribeUser.Field()
     unsubscribe_user = UnsubscribeUser.Field()
