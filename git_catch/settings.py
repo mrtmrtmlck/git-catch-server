@@ -46,7 +46,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-     #'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -129,4 +129,13 @@ GRAPHENE = {
     'SCHEMA': 'git_catch.schema.schema'
 }
 
+# TODO: change this line
 CORS_ORIGIN_ALLOW_ALL = True
+
+# TODO: change this settings
+# Email Settings
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = config('TEST_FROM_EMAIL')
+EMAIL_HOST_PASSWORD = config('TEST_EMAIL_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
