@@ -27,7 +27,7 @@ def send_verification_email(to_email, token):
     subject = '[GitCatch] Please verify your email address'
     from_email = config('TEST_FROM_EMAIL')
     text_content = 'This is an important message.'
-    html_content = f'<a href="http://localhost:3000/verify?token={token}">Verify your email.</a>'
+    html_content = f'<a href="http://localhost:3000/completeSubscription?token={token}">Complete Subscription</a>'
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
     msg.attach_alternative(html_content, "text/html")
     msg.send()

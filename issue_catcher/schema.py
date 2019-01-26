@@ -19,7 +19,7 @@ class LabelType(DjangoObjectType):
         model = Label
 
 
-class VerifyUser(graphene.Mutation):
+class SendVerificationEmail(graphene.Mutation):
     succeed = graphene.Boolean()
 
     class Arguments:
@@ -32,7 +32,7 @@ class VerifyUser(graphene.Mutation):
         token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
         send_verification_email(email, token)
 
-        return VerifyUser(succeed=True)
+        return SendVerificationEmail(succeed=True)
 
 
 class SubscribeUser(graphene.Mutation):
@@ -44,7 +44,8 @@ class SubscribeUser(graphene.Mutation):
     def mutate(self, info, token):
         try:
             subscription_info = json.loads(base64.urlsafe_b64decode(token).decode('utf-8'))
-            if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info['language_id_list']:
+            if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info[
+                'language_id_list']:
                 raise ValueError()
 
             with transaction.atomic():
@@ -84,6 +85,6 @@ class Query(object):
 
 
 class Mutation(graphene.ObjectType):
-    verify_user = VerifyUser.Field()
+    send_verification_email = SendVerificationEmail.Field()
     subscribe_user = SubscribeUser.Field()
     unsubscribe_user = UnsubscribeUser.Field()
