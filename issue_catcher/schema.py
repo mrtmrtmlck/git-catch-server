@@ -28,11 +28,17 @@ class SendVerificationEmail(graphene.Mutation):
         language_id_list = graphene.List(graphene.Int)
 
     def mutate(self, info, email, label_id_list, language_id_list):
-        token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
-        token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
-        send_verification_email(email, token)
+        try:
+            if not email or not label_id_list or not language_id_list or User.objects.filter(email=email).exists():
+                raise ValueError()
 
-        return SendVerificationEmail(succeed=True)
+            token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
+            token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
+            send_verification_email(email, token)
+
+            return SendVerificationEmail(succeed=True)
+        except:
+            raise Exception("Email cannot be sent!")
 
 
 class SubscribeUser(graphene.Mutation):
@@ -45,7 +51,7 @@ class SubscribeUser(graphene.Mutation):
         try:
             subscription_info = json.loads(base64.urlsafe_b64decode(token).decode('utf-8'))
             if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info[
-                'language_id_list']:
+                'language_id_list'] or User.objects.filter(email=subscription_info['email']).exists():
                 raise ValueError()
 
             with transaction.atomic():
