@@ -20,7 +20,8 @@ class LabelType(DjangoObjectType):
 
 
 class SendVerificationEmail(graphene.Mutation):
-    succeed = graphene.Boolean()
+    success = graphene.Boolean()
+    error = graphene.String()
 
     class Arguments:
         email = graphene.String()
@@ -29,20 +30,24 @@ class SendVerificationEmail(graphene.Mutation):
 
     def mutate(self, info, email, label_id_list, language_id_list):
         try:
-            if not email or not label_id_list or not language_id_list or User.objects.filter(email=email).exists():
-                raise ValueError()
+            if not email or not label_id_list or not language_id_list:
+                return SendVerificationEmail(success=False, error='All values should be given')
+
+            elif User.objects.filter(email=email).exists():
+                return SendVerificationEmail(success=False, error='Email already exists')
 
             token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
             token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
             send_verification_email(email, token)
 
-            return SendVerificationEmail(succeed=True)
+            return SendVerificationEmail(success=True)
         except:
-            raise Exception("Email cannot be sent!")
+            return SendVerificationEmail(success=False, error='Unexpected error occurred')
 
 
 class SubscribeUser(graphene.Mutation):
-    succeed = graphene.Boolean()
+    success = graphene.Boolean()
+    error = graphene.String()
 
     class Arguments:
         token = graphene.String()
@@ -51,8 +56,11 @@ class SubscribeUser(graphene.Mutation):
         try:
             subscription_info = json.loads(base64.urlsafe_b64decode(token).decode('utf-8'))
             if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info[
-                'language_id_list'] or User.objects.filter(email=subscription_info['email']).exists():
-                raise ValueError()
+                'language_id_list']:
+                return SubscribeUser(success=False, error='All values should be given')
+
+            elif User.objects.filter(email=subscription_info['email']).exists():
+                return SubscribeUser(success=False, error='Email already exists')
 
             with transaction.atomic():
                 user = User(email=subscription_info['email'])
@@ -62,13 +70,13 @@ class SubscribeUser(graphene.Mutation):
                 languages = Language.objects.filter(id__in=subscription_info['language_id_list'])
                 user.languages.add(*languages)
 
-                return SubscribeUser(succeed=True)
+                return SubscribeUser(success=True)
         except:
-            raise Exception("Subscription unsuccessful")
+            return SubscribeUser(success=False, error='Unexpected error occurred')
 
 
 class UnsubscribeUser(graphene.Mutation):
-    succeed = graphene.Boolean()
+    success = graphene.Boolean()
 
     class Arguments:
         email = graphene.String()
@@ -76,7 +84,7 @@ class UnsubscribeUser(graphene.Mutation):
     def mutate(self, info, email):
         User.objects.filter(email=email).delete()
 
-        return UnsubscribeUser(succeed=True)
+        return UnsubscribeUser(success=True)
 
 
 class Query(object):
