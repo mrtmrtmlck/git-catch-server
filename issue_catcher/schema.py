@@ -1,12 +1,10 @@
-import base64
-import json
-
 import graphene
 from django.db import transaction
 from graphene_django import DjangoObjectType
 
-from issue_catcher.email_service import send_verification_email
+from issue_catcher import utils
 from issue_catcher.models import Language, Label, User
+from services import email_service
 
 
 class LanguageType(DjangoObjectType):
@@ -37,8 +35,8 @@ class SendVerificationEmail(graphene.Mutation):
                 return SendVerificationEmail(success=False, error='Email already exists')
 
             token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
-            token = base64.urlsafe_b64encode(json.dumps(token_dict).encode('utf-8')).decode("utf-8")
-            send_verification_email(email, token)
+            token = utils.generate_token(token_dict)
+            email_service.send_verification_email(email, token)
 
             return SendVerificationEmail(success=True)
         except:
@@ -54,7 +52,7 @@ class SubscribeUser(graphene.Mutation):
 
     def mutate(self, info, token):
         try:
-            subscription_info = json.loads(base64.urlsafe_b64decode(token).decode('utf-8'))
+            subscription_info = utils.decode_token(token)
             if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info[
                 'language_id_list']:
                 return SubscribeUser(success=False, error='All values should be given')
