@@ -1,10 +1,10 @@
 import graphene
-from django.db import transaction
 from graphene_django import DjangoObjectType
 
 from issue_catcher import utils
+from issue_catcher.exceptions import DuplicateValueError
 from issue_catcher.models import Language, Label, User
-from services import email_service
+from services import email_service, user_service
 
 
 class LanguageType(DjangoObjectType):
@@ -53,23 +53,14 @@ class SubscribeUser(graphene.Mutation):
     def mutate(self, info, token):
         try:
             subscription_info = utils.decode_token(token)
-            if not subscription_info['email'] or not subscription_info['label_id_list'] or not subscription_info[
-                'language_id_list']:
-                return SubscribeUser(success=False, error='All values should be given')
+            user_service.subscribe_user(subscription_info)
 
-            elif User.objects.filter(email=subscription_info['email']).exists():
-                return SubscribeUser(success=False, error='Email already exists')
-
-            with transaction.atomic():
-                user = User(email=subscription_info['email'])
-                user.save()
-                labels = Label.objects.filter(id__in=subscription_info['label_id_list'])
-                user.labels.add(*labels)
-                languages = Language.objects.filter(id__in=subscription_info['language_id_list'])
-                user.languages.add(*languages)
-
-                return SubscribeUser(success=True)
-        except:
+            return SubscribeUser(success=True)
+        except ValueError:
+            return SubscribeUser(success=False, error='All values must be given')
+        except DuplicateValueError:
+            return SubscribeUser(success=False, error='Data already exists')
+        except Exception:
             return SubscribeUser(success=False, error='Unexpected error occurred')
 
 
@@ -80,9 +71,13 @@ class UnsubscribeUser(graphene.Mutation):
         email = graphene.String()
 
     def mutate(self, info, email):
-        User.objects.filter(email=email).delete()
+        try:
+            User.objects.filter(email=email).delete()
 
-        return UnsubscribeUser(success=True)
+            return UnsubscribeUser(success=True)
+        except:
+            return UnsubscribeUser(success=False)
+
 
 
 class Query(object):
