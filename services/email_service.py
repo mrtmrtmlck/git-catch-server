@@ -11,16 +11,20 @@ from services import issue_service
 
 
 def send_issues():
+    all_issues = issue_service.get_issues()
+    if len(all_issues) == 0:
+        return
+
     current_time = strftime('%d/%m/%Y %H:%M:%S', gmtime())
     subject = f'[GitCatch] There Are New Issues For You - {current_time}'
     from_email = config('FROM_EMAIL')
     users = User.objects.all()
     for user in users:
-        issues = issue_service.get_issues_by_user(user.id)
-        if len(issues) == 0:
+        user_issues = issue_service.get_issues_by_user(all_issues, user.id)
+        if len(user_issues) == 0:
             continue
-        print("Issues title: " + issues[0]['title'])
-        html_message = render_to_string('email_templates/issues.html', {'issues': issues})
+        print("Issues title: " + user_issues[0]['title'])
+        html_message = render_to_string('email_templates/issues.html', {'issues': user_issues})
         plain_message = strip_tags(html_message)
         print("message created: " + plain_message)
         mail.send_mail(subject, plain_message, from_email, [user.email], html_message=html_message, fail_silently=False)

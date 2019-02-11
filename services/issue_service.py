@@ -58,11 +58,10 @@ def get_issues():
     return issue_list
 
 
-def get_issues_by_user(user_id):
+def get_issues_by_user(issues, user_id):
     user = User.objects.get(pk=user_id)
     user_labels = user.labels.values_list('name', flat=True)
     user_languages = user.languages.values_list('name', flat=True)
-    issues = get_issues()
     user_issues = [issue for issue in issues
                    if any(label['node']['name'] in user_labels for label in issue['labels']['edges']) and
                    any(language['node']['name'] in user_languages for language in
