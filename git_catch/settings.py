@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'issue_catcher',
+    'issue_catcher.apps.IssueCatcherConfig',
     'graphene_django',
     'corsheaders',
 ]
