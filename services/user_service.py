@@ -3,6 +3,7 @@ from django.db import transaction
 from issue_catcher.models import User, Label, Language
 from issue_catcher.exceptions import DuplicateValueError
 
+
 def subscribe_user(user_info):
     try:
         if not user_info['email'] or not user_info['label_id_list'] or not user_info['language_id_list']:
@@ -20,4 +21,3 @@ def subscribe_user(user_info):
             user.languages.add(*languages)
     except:
         raise Exception
-

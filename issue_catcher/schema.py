@@ -79,7 +79,6 @@ class UnsubscribeUser(graphene.Mutation):
             return UnsubscribeUser(success=False)
 
 
-
 class Query(object):
     languages = graphene.List(LanguageType)
     labels = graphene.List(LabelType)

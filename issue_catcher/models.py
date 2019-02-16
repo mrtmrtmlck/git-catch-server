@@ -37,3 +37,8 @@ class User(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class GithubRequestLog(models.Model):
+    label = models.CharField(max_length=50, unique=True)
+    request_date = models.DateTimeField(auto_now_add=True)

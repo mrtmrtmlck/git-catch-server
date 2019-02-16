@@ -1,9 +1,11 @@
+import datetime
 from itertools import chain
+from string import Template
 
 import requests
-from string import Template
 from decouple import config
-from issue_catcher.models import Label, User
+
+from issue_catcher.models import Label, User, GithubRequestLog
 
 
 def get_issues():
@@ -13,7 +15,7 @@ def get_issues():
     query_template = Template(
         """
         {
-          search(first: 100, type: ISSUE, query: "state:open is:public label:$label created:2019-02-08T10:00..2019-02-08T15:00") {
+          search(first: 100, type: ISSUE, query: "state:open is:public label:$label created:$start_time..$end_time") {
             edges {
               node {
                 ... on Issue {
@@ -51,8 +53,23 @@ def get_issues():
     all_labels = list(
         chain.from_iterable((label.name.replace(' ', '-'), fr'\"{label.name}\"') for label in Label.objects.all()))
     for label in all_labels:
-        response = requests.post(url=url, json={'query': query_template.substitute(label=label)}, headers=headers)
-        issue_list.extend([item['node'] for item in response.json()['data']['search']['edges']
+        request_log = GithubRequestLog.objects.filter(label=label)
+        if request_log.count() > 0:
+            last_request_date = request_log.latest('id').request_date
+        else:
+            last_request_date = datetime.datetime.now() - datetime.timedelta(hours=5)
+
+        start_time = f'{last_request_date:%Y-%m-%dT%H:%M}'
+        end_time = f'{datetime.datetime.now():%Y-%m-%dT%H:%M}'
+        response = requests.post(url=url,
+                                 json={'query': query_template.substitute(label=label, start_time=start_time,
+                                                                          end_time=end_time)},
+                                 headers=headers).json()
+
+        if 'errors' not in response:
+            GithubRequestLog.objects.update_or_create(label=label, defaults={'request_date': datetime.datetime.now()})
+
+        issue_list.extend([item['node'] for item in response['data']['search']['edges']
                            if item['node'] and item['node'] not in issue_list])
 
     return issue_list

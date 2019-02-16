@@ -1,5 +1,4 @@
-from time import strftime, gmtime
-
+import datetime
 from decouple import config
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives
@@ -15,8 +14,7 @@ def send_issues():
     if len(all_issues) == 0:
         return
 
-    current_time = strftime('%d/%m/%Y %H:%M:%S', gmtime())
-    subject = f'[GitCatch] There Are New Issues For You - {current_time}'
+    subject = f'[GitCatch] There Are New Issues For You - {datetime.datetime.now():%Y-%m-%d %H:%M}'
     from_email = config('FROM_EMAIL')
     users = User.objects.all()
     for user in users:
