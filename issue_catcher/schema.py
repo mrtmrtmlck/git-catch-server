@@ -1,7 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
 
-from issue_catcher import utils
 from issue_catcher.exceptions import DuplicateValueError
 from issue_catcher.models import Language, Label, User
 from services import email_service, user_service
@@ -35,8 +34,7 @@ class SendVerificationEmail(graphene.Mutation):
                 return SendVerificationEmail(success=False, error='Email already exists')
 
             token_dict = {'email': email, 'label_id_list': label_id_list, 'language_id_list': language_id_list}
-            token = utils.generate_token(token_dict)
-            email_service.send_verification_email(email, token)
+            email_service.send_verification_email(email, token_dict)
 
             return SendVerificationEmail(success=True)
         except:
@@ -52,8 +50,7 @@ class SubscribeUser(graphene.Mutation):
 
     def mutate(self, info, token):
         try:
-            subscription_info = utils.decode_token(token)
-            user_service.subscribe_user(subscription_info)
+            user_service.subscribe_user(token)
 
             return SubscribeUser(success=True)
         except ValueError:
@@ -68,15 +65,17 @@ class UnsubscribeUser(graphene.Mutation):
     success = graphene.Boolean()
 
     class Arguments:
-        email = graphene.String()
+        token = graphene.String()
 
-    def mutate(self, info, email):
+    def mutate(self, info, token):
         try:
-            User.objects.filter(email=email).delete()
+            user_service.unsubscribe_user(token)
 
             return UnsubscribeUser(success=True)
-        except:
-            return UnsubscribeUser(success=False)
+        except ValueError:
+            return SubscribeUser(success=False, error='All values must be given')
+        except Exception:
+            return UnsubscribeUser(success=False, error='Unexpected error occurred')
 
 
 class Query(object):
